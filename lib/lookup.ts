@@ -22,11 +22,12 @@ async function meowMeow428(gallery: string, subject: string) {
         body: JSON. stringify({ custID: siteConfig.customerId, galleryID: gallery, email: "a@a.aa", subjectID: subject })
     })
     const content = await res.json()
-    loadGallery(gallery, subject, content.visitor, content.visit)
+    const result = await loadGallery(gallery, subject, content.visitor, content.visit)
+    console.log(result)
 }
 
 async function loadGallery(gallery: string, subject: string, visitor: any, visits: any) {
-    let result: { galleryID: number; personName?: string; fullURL?: string; uploaded?: string; filename?: string; name?: string; height?: number; width?: number; bsn?: string; exposureTime?: number; iso?: number; lens?: string; fn?: number; fl?: number; comment?: string; model?: string; date?: string; }[] = []
+    let result: { success: boolean; galleryID: number; personName?: string; isGroup?: boolean; fullURL?: string; uploaded?: string; filename?: string; name?: string; height?: number; width?: number; bsn?: string; exposureTime?: number; iso?: number; lens?: string; fn?: number; fl?: number; comment?: string; model?: string; date?: string; }[] = []
     const visit = {[`${gallery}`]: {[`${subject}`]: {"id": visits.id}, "custID": siteConfig.customerId, "galleryID": gallery, "token": null}}
     delete visitor.contact
     const url = `https://api.imagequix.com/vando/gallery/${gallery}/load/${subject}`
@@ -38,41 +39,40 @@ async function loadGallery(gallery: string, subject: string, visitor: any, visit
     try {
         const content = await res.json()
         if (!content.imageData || !content.imageData.categories[0].primaryImage) {
-            console.log("unavailable")
+            result.push({ success: false, galleryID: parseInt(gallery) })
         } else {
             content.imageData.categories.forEach(obj => {
                 obj.images.forEach(image => {
                     result.push({
-                        galleryID: image.galleryID,
+                        success: true,
+                        galleryID: image.galleryID || gallery,
                         personName: obj.name,
+                        isGroup: obj.isGroup || false,
                         fullURL: `${content.imageData.onDemandUrl}600/${image.name}`, 
                         uploaded: image.timestamp, 
                         filename: image.filename, 
                         name: image.name, 
                         height: image.height, 
                         width: image.width, 
-                        bsn: image.exif.BodySerialNumber, 
+                        bsn: image.exif.BodySerialNumber || "None (group photo)", 
                         exposureTime: image.exif.ExposureTime, 
-                        iso: image.exif.ISO, 
-                        lens: image.exif.LensModel,
+                        iso: image.exif.ISO || 100, 
+                        lens: image.exif.LensModel || "Most Likely EF24-105mm f/4L IS USM",
                         fn: image.exif.FNumber,
                         fl: image.exif.FocalLength, 
-                        comment: image.exif.UserComment, 
-                        model: image.exif.Model, 
-                        date: image.exif.DateTimeOriginal, 
+                        comment: image.exif.UserComment || "", 
+                        model: image.exif.Model || "Most Likely Canon EOS 6D Mark II", 
+                        date: image.exif.DateTimeOriginal || image.timestamp, 
                     })
                 })
-                console.log(result)
-            })          
+            })       
         }
     }
     catch {
-        console.log("er")
         let pass
     }
-    
+    return result;
 }       
             
-
-getGalleries("")
+getGalleries("1853413")
 
