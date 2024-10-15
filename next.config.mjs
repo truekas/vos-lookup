@@ -4,6 +4,12 @@ const nextConfig = {
   experimental: {
     appDir: true,
   },
+  images: {
+    domains: [
+      "api.imagequix.com",
+      "c.tenor.com",
+    ]
+  }
 }
 
 export default nextConfig
